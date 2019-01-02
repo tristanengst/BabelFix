@@ -1,0 +1,29 @@
+{
+  "name": "Quick Translate: French",
+  "description": "Press Ctrl+Shift+Y to see an French-to-English translation of a word",
+  "version": "0.9.0",
+  "manifest_version": 2,
+  "permissions": ["contextMenus", "tabs", "<all_urls>", "*://*/*"],
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+  "browser_action": {
+    "default_popup": "browser_action.html"
+  },
+  "commands": {
+    "display-reference": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+Y",
+        "mac": "MacCtrl+Shift+Y"
+       },
+      "description": "Display a translation dictionary entry for the selected text"
+    },
+    "_execute_browser_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+K",
+        "mac": "MacCtrl+Shift+K"
+      }
+    }
+  }
+}
