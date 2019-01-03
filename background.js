@@ -1,10 +1,14 @@
 //Injected code which returns selected text
+//Stores the window ID of the window currently displaying translations
+var new_window_ID = null;
+
+var word_array = new Array();
+
 var code_injection = function() {
     return window.getSelection().toString().trim();
 }
 
-//Stores the window ID of the window currently displaying translations
-var new_window_ID = null;
+var stored_html = "";
 
 //Closes the current translation window if it exists and opens a new translation
 //window corresponding to the selected text
@@ -14,6 +18,9 @@ function display_reference(result) {
         chrome.windows.remove(new_window_ID, function() {
                 if (chrome.runtime.lastError) {
                     alert("error: ", chrome.runtime.lastError);
+
+                    //// TODO: this error shouldn't ever be seen by the user,
+                    ////       as the user may have closed the popup window
                 }
             }
         );
@@ -22,6 +29,13 @@ function display_reference(result) {
             new_window_ID = new_window.id;
         }
     );
+}
+
+//Stores a word for later study
+function store_word(word) {
+    if (!word_array.includes(word)) {
+        word_array.push(word);
+    }
 }
 
 //Entry point to start opening appropriate windows
@@ -34,6 +48,10 @@ chrome.commands.onCommand.addListener(function(command) {
             function(result) {
                 if (result != "") {
                     display_reference(result);
+                    if (word_array.includes(result) == false) { //Broken. // TODO: Fix. Duplicates are allowed
+                        stored_html += '<tr>' + result + '</tr> <br>';
+                        store_word(result);
+                    }
                 }
                 if (chrome.runtime.lastError) {
                     alert("error: ", chrome.runtime.lastError);
