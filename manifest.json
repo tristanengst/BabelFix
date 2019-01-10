@@ -1,12 +1,12 @@
 {
     "name": "Quick Translate: French",
     "description": "Press Ctrl+Shift+Y to see an French-to-English translation of a word",
-    "version": "0.9.0",
+    "version": "0.9.1",
     "manifest_version": 2,
     "permissions": ["contextMenus", "tabs", "<all_urls>", "*://*/*"],
     "background": {
         "scripts": ["background.js"],
-        "persistent": false
+        "persistent": true
     },
     "browser_action": {
         "default_popup": "popup.html"
