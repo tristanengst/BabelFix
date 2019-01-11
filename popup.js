@@ -1,7 +1,11 @@
-var html_string = "";
-
 document.addEventListener('DOMContentLoaded', function () {
-    var background_page = chrome.extension.getBackgroundPage();
-    html_string = background_page.stored_html;
-    document.getElementById("table").innerHTML = html_string;
+    chrome.storage.local.get("html", function(item) {
+        document.getElementById("table").innerHTML = item.html;
+    })
 });
+
+document.getElementById("clear_button").addEventListener("click", clear());
+
+function clear() {
+    chrome.runtime.sendMessage({greeting: "clear_html_string"});
+}

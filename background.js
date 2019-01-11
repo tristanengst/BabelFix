@@ -8,7 +8,7 @@ var code_injection = function() {
     return window.getSelection().toString().trim();
 }
 
-var stored_html = "";
+var html_object = {html: ""};
 
 //Closes the current translation window if it exists and opens a new translation
 //window corresponding to the selected text
@@ -48,15 +48,19 @@ chrome.commands.onCommand.addListener(function(command) {
             function(result) {
                 if (result != "") {
                     display_reference(result);
-                    if (word_array.includes(result) == false) { //Broken. // TODO: Fix. Duplicates are allowed
-                        stored_html += '<tr>' + result + '</tr> <br>';
-                        store_word(result);
-                    }
+                    html_object.html = html_object.html + '<tr>' + result + '</tr> <br>';
+                    chrome.storage.local.set(html_object);
                 }
                 if (chrome.runtime.lastError) {
                     alert("error: ", chrome.runtime.lastError);
                 }
             }
         );
+    }
+});
+
+chrome.runtime.onMessage.addListener(function(request) {
+    if (request.greeting == "clear_html_string") {
+        chrome.storage.local.remove("html");
     }
 });
