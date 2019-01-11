@@ -11,8 +11,10 @@ var html_object = {html: ""};
 
 //Closes the current translation window if it exists and opens a new translation
 //window corresponding to the selected text
-function display_reference(result) {
-    var link = 'https://www.wordreference.com/fren/' + result;
+function display_reference(result, type) {
+    var link;
+    if (type === "dictionary") link = 'https://www.wordreference.com/fren/' + result;
+    else link = 'https://www.wordreference.com/conj/FrVerbs.aspx?v=' + result;
     if (new_window_ID != null) chrome.windows.remove(new_window_ID, function() {}); //This could probably be done without creating a new window each time
     chrome.windows.create({url: link, width: 480, height: 480, focused: true, type: "popup"}, function(new_window) {
             new_window_ID = new_window.id;
@@ -22,10 +24,10 @@ function display_reference(result) {
 
 //When commanded, fetches the selected text, displays a reference to that text, and stores the text
 chrome.commands.onCommand.addListener(function(command) {
-    if (command === 'display-reference') {
+    if (command === 'display-dictionary-reference') {
         chrome.tabs.executeScript({code: '(' + code_injection + ')()', allFrames: true}, function(result) {
                 if (result != "") {
-                    display_reference(result);
+                    display_reference(result, "dictionary");
                     html_object.html = html_object.html + '<tr>' + result + '</tr> <br>';
                     chrome.storage.local.set(html_object);
                 }
@@ -44,5 +46,22 @@ chrome.tabs.onUpdated.addListener( function (tabId, changeInfo, tab) {
         var search = tab.url.substring(search_position)
         html_object.html = html_object.html + '<tr>' + search + '</tr> <br>';
         chrome.storage.local.set(html_object);
+    }
+});
+
+//When commanded, fetches the selected text, displays a list of conjugations for that text
+chrome.commands.onCommand.addListener(function(command) {
+    if (command === 'display-conjugation-reference') {
+        chrome.tabs.executeScript({code: '(' + code_injection + ')()', allFrames: true}, function(result) {
+                if (result != "") {
+                    display_reference(result, "conjugation");
+                    html_object.html = html_object.html + '<tr> (conjugate)' + result + '</tr> <br>';
+                    chrome.storage.local.set(html_object);
+                }
+                if (chrome.runtime.lastError) {
+                    alert("error: ", chrome.runtime.lastError);
+                }
+            }
+        );
     }
 });

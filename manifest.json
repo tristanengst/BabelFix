@@ -12,12 +12,19 @@
         "default_popup": "popup.html"
     },
     "commands": {
-        "display-reference": {
+        "display-dictionary-reference": {
             "suggested_key": {
                 "default": "Ctrl+Shift+Y",
                 "mac": "MacCtrl+Shift+Y"
             },
             "description": "Display a translation dictionary entry for the selected text"
+        },
+        "display-conjugation-reference": {
+            "suggested_key": {
+                "default": "Ctrl+Shift+C",
+                "mac": "MacCtrl+Shift+C"
+            },
+            "description": "Display a list of conjugations for the selected verb"
         },
         "_execute_browser_action": {
             "suggested_key": {
