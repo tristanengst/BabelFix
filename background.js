@@ -36,3 +36,13 @@ chrome.commands.onCommand.addListener(function(command) {
         );
     }
 });
+
+//When an English-to-French search is made, log what the search was on
+chrome.tabs.onUpdated.addListener( function (tabId, changeInfo, tab) {
+    if (changeInfo.status == 'complete' && tab.active && tab.url.includes("https://www.wordreference.com/enfr/")) {
+        var search_position = tab.url.lastIndexOf("/") + 1;
+        var search = tab.url.substring(search_position)
+        html_object.html = html_object.html + '<tr>' + search + '</tr> <br>';
+        chrome.storage.local.set(html_object);
+    }
+});
