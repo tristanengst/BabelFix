@@ -1,11 +1,11 @@
 document.addEventListener('DOMContentLoaded', function () {
     chrome.storage.local.get("html", function(item) {
-        document.getElementById("table").innerHTML = item.html;
+        if (item.html != undefined) {
+            document.getElementById("table").innerHTML = item.html;
+        }
     })
+    document.getElementById("clear_button").addEventListener("click", function() {
+        chrome.storage.local.clear();
+        window.location.reload(false);
+    });
 });
-
-document.getElementById("clear_button").addEventListener("click", clear());
-
-function clear() {
-    chrome.runtime.sendMessage({greeting: "clear_html_string"});
-}
