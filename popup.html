@@ -3,11 +3,23 @@
     <head>
         <script src="popup.js"></script>
     </head>
-    <body style="background-color: white; width: 180px; height: 500px;">
-        <div id="button_container">
-            <button id="clear_button">Clear</button>
-        </div>
+    <body style="background-color: white; width: 200px; height: 500px;">
+        <span id="language_setting">Language set to</span>
+        <select id="language_selector">
+            <option value="BURMESE" id="BURMESE">Burmese</option>
+            <option value="CHINESE" id="CHINESE">Chinese</option>
+            <option value="FRENCH" id="FRENCH">French</option>
+            <option value="HUNGARIAN" id="HUNGARIAN">Hungarian</option>
+            <option value="JAPANESE" id="JAPANESE">Japanese</option>
+            <option value="KOREAN" id="KOREAN">Korean</option>
+            <option value="SPANISH" id="SPANISH">Spanish</option>
+        </select>
+        <hr>
         <table id="table">
         </table>
+        <hr>
+        <div id="button_container">
+            <button id="clear_button">Clear Saved Words</button>
+        </div>
     </body>
 </html>

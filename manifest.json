@@ -1,15 +1,18 @@
 {
-    "name": "Quick Translate: French",
-    "description": "Press Ctrl+Shift+Y to see an French-to-English translation of a word",
-    "version": "0.9.9",
+    "name": "BabelFix",
+    "description": "Eases English speakers chatting in languages they know only a little",
+    "version": "0.9.10",
     "manifest_version": 2,
-    "permissions": ["contextMenus", "tabs", "<all_urls>", "*://*/*", "storage"],
+    "permissions": ["contextMenus", "tabs", "<all_urls>", "*://*/*", "storage", "notifications"],
     "background": {
         "scripts": ["background.js"],
         "persistent": true
     },
     "browser_action": {
         "default_popup": "popup.html"
+    },
+    "icons": {
+        "248": "icon.png"
     },
     "commands": {
         "display-dictionary-reference": {
