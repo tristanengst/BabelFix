@@ -1,14 +1,9 @@
 //An enum storing information to make this work for supported languages_enum
 var languages_enum = {
-    BURMESE: {to_english_url: "", from_english_url: "", conjugation_url: "", search_positioner: ""},
     FRENCH: {to_english_url: "https://www.wordreference.com/fren/", from_english_url: "https://www.wordreference.com/enfr/", conjugation_url: "https://www.wordreference.com/conj/FrVerbs.aspx?v=", search_positioner: "/"},
-    HUNGARIAN: {to_english_url: "", from_english_url: "", conjugation_url: "", search_positioner: ""},
     MANDARIN: {to_english_url: "https://www.wordreference.com/zhen/", from_english_url: "https://www.wordreference.com/enzh/", conjugation_url: "", search_positioner: ""},
     SPANISH: {to_english_url: "https://www.wordreference.com/es/en/translation.asp?spen=", from_english_url: "https://www.wordreference.com/es/translation.asp?tranword=", conjugation_url: "https://www.wordreference.com/conj/EsVerbs.aspx?v=", search_positioner: "="},
 };
-
-//An array storing the supported languages
-var languages = ["BURMESE", "FRENCH", "HUNGARIAN", "MANDARIN", "SPANISH"];
 
 //Stores the window ID of the window currently displaying translations
 var new_window_ID = null;
@@ -18,112 +13,120 @@ var code_injection = function() {
     return window.getSelection().toString().trim();
 }
 
-//An object to store the HTML string passed to popup.js containing the words to save
-var storage_object = {html: "", language: "", language_number: -1};
+//Code to run when the extension is installed or updated
+chrome.runtime.onInstalled.addListener(function(details) {
+    chrome.storage.local.set({html: "", language: ""});
+    if (details.reason == "install") give_notification("installation");
+});
 
-//Closes the current translation window if it exists and opens a new translation
-//window corresponding to the selected text
-function display_reference(result, type) {
-    chrome.storage.local.get("language", function(returned_language) {
-        chrome.storage.local.get("language", function(item) {
-            var link;
-            if (type === "dictionary") link = languages_enum[item.language].to_english_url + result;
-            else if (item.language != "MANDARIN" && item.language!= "BURMESE") link = languages_enum[item.language].conjugation_url + result;
-            else return;
-            if (new_window_ID != null) chrome.windows.remove(new_window_ID, function() {
-                if (chrome.runtime.lastError) {} //do nothing! This error is created when the user manually closes the window
-            }); //This could probably be done without creating a new window each time
-            chrome.windows.create({url: link, width: 480, height: 480, focused: true, type: "popup"}, function(new_window) {
-                    new_window_ID = new_window.id;
-                }
-            );
-        });
-    });
+//Closes the current reference window if it exists and opens a new reference
+//  window as appropriate
+function display_reference(result, type, language) {
+    var link;
+    if (type === "dictionary") link = languages_enum[language].to_english_url + result;
+    else if (type === "conjugation" && language != "MANDARIN") link = languages_enum[language].conjugation_url + result;
+    else return;
+    if (new_window_ID != null) chrome.windows.remove(new_window_ID, function() {
+        if (chrome.runtime.lastError) {} //do nothing! This error is created when the user manually closes the window
+    }); //This could probably be done without creating a new window each time
+    chrome.windows.create({url: link, width: 480, height: 480, focused: true, type: "popup"}, function(new_window) {
+            new_window_ID = new_window.id;
+        }
+    );
 }
 
-//When commanded, fetches the selected text, displays a reference to that text, and stores the text
+//Calls a function to appropriately process selected text
 chrome.commands.onCommand.addListener(function(command) {
     if (command === 'display-dictionary-reference') {
-        chrome.tabs.executeScript({code: '(' + code_injection + ')()', allFrames: true}, function(result) {
-                if (result != "") {
-                    display_reference(result, "dictionary");
-                    storage_object.html = storage_object.html + '<tr>' + result + '</tr> <br>';
-                    chrome.storage.local.set(storage_object);
-                }
-                if (chrome.runtime.lastError) {
-                    alert("error: ", chrome.runtime.lastError);
-                }
+        chrome.storage.local.get(null, function(item) {
+            if (item.language == "") {
+                give_notification("language_needed");
+                return;
             }
-        );
+            process_input("dictionary", item.language, item.html);
+        });
     }
 });
 
-//When an English-to-French search is made, log what the search was on
-chrome.tabs.onUpdated.addListener( function (tabId, changeInfo, tab) {
-    chrome.storage.local.get("language", function(returned_language) {
-        chrome.storage.local.get("language", function(item) {
-            if (changeInfo.status == 'complete' && tab.active && tab.url.includes(languages_enum[item.language].from_english_url)) {
-                var search_position = tab.url.lastIndexOf(languages_enum[item.language].search_positioner) + 1;
-                var search = tab.url.substring(search_position)
-                storage_object.html = storage_object.html + '<tr>' + search + '</tr> <br>';
-                chrome.storage.local.set(storage_object);
-            }
-        });
-    });
-});
-
-//When commanded, fetches the selected text, displays a list of conjugations for that text
+//Calls a function to appropriately process selected text
 chrome.commands.onCommand.addListener(function(command) {
     if (command === 'display-conjugation-reference') {
-        chrome.tabs.executeScript({code: '(' + code_injection + ')()', allFrames: true}, function(result) {
-                if (result != "") {
-                    display_reference(result, "conjugation");
-                    storage_object.html = storage_object.html + '<tr> (conjugate) ' + result + '</tr> <br>';
-                    chrome.storage.local.set(storage_object);
+        chrome.storage.local.get(null, function(item) {
+            if (item.language == "") {
+                give_notification("language_needed");
+                return;
+            }
+            process_input("conjugation", item.language, item.html);
+        });
+    }
+});
+
+//Displays a reference for the selected text, as appropriate, and logs the selected text
+function process_input(type, language, html) {
+    chrome.tabs.executeScript({code: '(' + code_injection + ')()', allFrames: true}, function(result) {
+            if (result != "") {
+                if (type == "dictionary") {
+                    display_reference(result, "dictionary", language);
+                    var updated_html = html + '<tr>' + result + '</tr> <br>';
+                    chrome.storage.local.set({html: updated_html});
                 }
-                if (chrome.runtime.lastError) {
-                    alert("error: 2", chrome.runtime.lastError);
+                else {
+                    display_reference(result, "conjugation", language);
+                    var updated_html = html + '<tr> (conjugate) ' + result + '</tr> <br>';
+                    chrome.storage.local.set({html: updated_html});
                 }
             }
-        );
-    }
-});
-
-function get_language_number(language_to_check) {
-    for (var i =  0; i < languages.length; i++) {
-        if (language_to_check == languages[i]) return i;
-    }
-    return -1;
+            if (chrome.runtime.lastError) {
+                alert("error", chrome.runtime.lastError);
+            }
+        }
+    );
 }
 
-//Prompts the user to update the language
-function update_language(language_to_check) {
-    storage_object.language = language_to_check;
-    storage_object.language_number = get_language_number(language_to_check);
-    chrome.storage.local.set(storage_object);
-}
-
-//Listener which listens for whether or not to clear the stored words
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-    if (request.greeting == "clear_words") {
-        if (confirm("Clear saved words?")) {
-            storage_object.html = "";
-            chrome.storage.local.set(storage_object);
+//When an English-to-Other Language search is made, log what the search was on
+chrome.tabs.onUpdated.addListener( function (tabId, changeInfo, tab) {
+    var from_english_urls = ["https://www.wordreference.com/enfr/", "https://www.wordreference.com/enzh/", "https://www.wordreference.com/es/translation.asp?tranword="];
+    if (changeInfo.status == "complete") {
+        for (var i = 0; i < from_english_urls.length; i++) {
+            if (tab.url.includes(from_english_urls[i])) {
+                chrome.storage.local.get(null, function(item) {
+                    if (item.language == "") {
+                        give_notification("language_needed");
+                        return;
+                    }
+                    var search_position = tab.url.lastIndexOf(languages_enum[item.language].search_positioner) + 1;
+                    var search = tab.url.substring(search_position)
+                    var updated_html = item.html + '<tr>' + search + '</tr> <br>';
+                    chrome.storage.local.set({html: updated_html});
+                });
+                break;
+            }
         }
     }
-    sendResponse({farewell: storage_object.language});
 });
 
+/////////CODE PROMPTING THE USER TO SELECT A LANGUAGE//////////
+
+//An object containing the notification sent to users on installation
 var install_notification = {
     type: "basic",
-    title: "BabelFix Installed!",
-    message: "Make sure to select a language",
+    title: "BabelFix Installed",
+    message: "Make sure to select a language!",
     iconUrl: "icon.png",
-
 };
 
-chrome.runtime.onInstalled.addListener(function(details) {
-    if (details.reason == "install") {
-        chrome.notifications.create(install_notification);
-    }
-});
+//An object containing a notification sent to users to tell them to select a
+//  language
+var language_unset_notification = {
+    type: "basic",
+    title: "It looks like BabelFix could help you now...",
+    message: "But first you need to select a language!",
+    iconUrl: "icon.png",
+};
+
+//Gives a notification
+function give_notification(type) {
+    if (type == "installation") chrome.notifications.create(install_notification);
+    else if (type == "language_needed") chrome.notifications.create(language_unset_notification);
+    else return;
+}
