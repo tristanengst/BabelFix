@@ -5,6 +5,8 @@ var languages_enum = {
     SPANISH: {to_english_url: "https://www.wordreference.com/es/en/translation.asp?spen=", from_english_url: "https://www.wordreference.com/es/translation.asp?tranword=", conjugation_url: "https://www.wordreference.com/conj/EsVerbs.aspx?v=", search_positioner: "="},
 };
 
+var last_word_added = null;
+
 //Stores the window ID of the window currently displaying translations
 var new_window_ID = null;
 
@@ -64,7 +66,7 @@ chrome.commands.onCommand.addListener(function(command) {
 //Displays a reference for the selected text, as appropriate, and logs the selected text
 function process_input(type, language, html) {
     chrome.tabs.executeScript({code: '(' + code_injection + ')()', allFrames: true}, function(result) {
-            if (result != "") {
+            if (result != "" && last_word_added != result) {
                 if (type == "dictionary") {
                     display_reference(result, "dictionary", language);
                     var updated_html = html + '<tr>' + result + '</tr> <br>';
@@ -76,6 +78,11 @@ function process_input(type, language, html) {
                     chrome.storage.local.set({html: updated_html});
                 }
             }
+            if (result != "" && last_word_added == result) {
+                if (type == "dictionary") display_reference(result, "dictionary", language);
+                else display_reference(result, "conjugation", language);
+            }
+            last_word_added = result;
             if (chrome.runtime.lastError) {
                 alert("error", chrome.runtime.lastError);
             }
@@ -96,8 +103,11 @@ chrome.tabs.onUpdated.addListener( function (tabId, changeInfo, tab) {
                     }
                     var search_position = tab.url.lastIndexOf(languages_enum[item.language].search_positioner) + 1;
                     var search = tab.url.substring(search_position)
-                    var updated_html = item.html + '<tr>' + search + '</tr> <br>';
-                    chrome.storage.local.set({html: updated_html});
+                    if (last_word_added != search) {
+                        var updated_html = item.html + '<tr>' + search + '</tr> <br>';
+                        chrome.storage.local.set({html: updated_html});
+                    }
+                    last_word_added = search;
                 });
                 break;
             }
