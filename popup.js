@@ -6,6 +6,7 @@ document.addEventListener("DOMContentLoaded", function () {
     })
     document.getElementById("clear_button").addEventListener("click", function() {
         chrome.storage.local.set({html: ""});
+        window.location.reload(false);
     });
     document.getElementById("language_selector").onchange = function() {
         var new_language = document.getElementById("language_selector").value;
