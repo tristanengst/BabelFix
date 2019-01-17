@@ -5,6 +5,9 @@ var languages_enum = {
     SPANISH: {to_english_url: "https://www.wordreference.com/es/en/translation.asp?spen=", from_english_url: "https://www.wordreference.com/es/translation.asp?tranword=", conjugation_url: "https://www.wordreference.com/conj/EsVerbs.aspx?v=", search_positioner: "="},
 };
 
+//Keeps track of the last word added to prevent duplicates, especially from if a key is held down.
+//Only the last word is tracked—duplicate words are allowed-with the intent of having words looked
+//up often be ones that are reviewed the most
 var last_word_added = null;
 
 //Stores the window ID of the window currently displaying translations
@@ -12,7 +15,7 @@ var new_window_ID = null;
 
 //Injected code which returns selected text
 var code_injection = function() {
-    return window.getSelection().toString().trim();
+    return window.getSelection().toString().trim().replace("%20", " ").replace(/[!,.?:;'"()*{}]/g, "");
 }
 
 //Code to run when the extension is installed or updated
@@ -69,12 +72,12 @@ function process_input(type, language, html) {
             if (result != "" && last_word_added != result) {
                 if (type == "dictionary") {
                     display_reference(result, "dictionary", language);
-                    var updated_html = html + '<tr>' + result + '</tr> <br>';
+                    var updated_html = html + '<tr><td>' + result + '</td></tr>';
                     chrome.storage.local.set({html: updated_html});
                 }
                 else {
                     display_reference(result, "conjugation", language);
-                    var updated_html = html + '<tr> (conjugate) ' + result + '</tr> <br>';
+                    var updated_html = html + '<tr><td> (conjugate) ' + result + '</td></tr>';
                     chrome.storage.local.set({html: updated_html});
                 }
             }
@@ -104,7 +107,7 @@ chrome.tabs.onUpdated.addListener( function (tabId, changeInfo, tab) {
                     var search_position = tab.url.lastIndexOf(languages_enum[item.language].search_positioner) + 1;
                     var search = tab.url.substring(search_position)
                     if (last_word_added != search) {
-                        var updated_html = item.html + '<tr>' + search + '</tr> <br>';
+                        var updated_html = item.html + '<tr><td>' + search.replace("%20", " ").replace(/[!,.?:;'"()*{}]/g, "") + '</td></tr>';
                         chrome.storage.local.set({html: updated_html});
                     }
                     last_word_added = search;
@@ -122,16 +125,16 @@ var install_notification = {
     type: "basic",
     title: "BabelFix Installed",
     message: "Make sure to select a language!",
-    iconUrl: "icon.png",
+    iconUrl: "images/icon.png",
 };
 
 //An object containing a notification sent to users to tell them to select a
 //  language
 var language_unset_notification = {
     type: "basic",
-    title: "It looks like BabelFix could help you now...",
-    message: "But first you need to select a language!",
-    iconUrl: "icon.png",
+    title: "BabelFix could have saved that word...",
+    message: "Select a language from the extension icon to start using BabelFix",
+    iconUrl: "images/icon.png",
 };
 
 //Gives a notification

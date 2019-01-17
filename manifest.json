@@ -12,7 +12,7 @@
         "default_popup": "popup.html"
     },
     "icons": {
-        "248": "icon.png"
+        "248": "images/icon.png"
     },
     "commands": {
         "display-dictionary-reference": {

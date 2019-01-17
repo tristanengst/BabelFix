@@ -11,6 +11,8 @@ SUPPORTED LANGUAGES: French, Mandarin, and Spanish  (Hopefully more will be adde
 
 ----------VERSION HISTORY---------
 
+Version 1.0.1: Minor bug fixes and enhancements: no expanding white space above words, filters out punctuation. This will likely be the last update in a while since I have college to return to.
+
 Version 1.0.0: Major bug fixes
 
 Version 0.9.9: Selected words persist over long time periods, selected words can be cleared, and Ctrl+Shift+C can be used to used to view verb conjugations for any conjugation of a French verb.
