@@ -1,5 +1,5 @@
 # BabelFix (beta)
-Helps with quick translation for texting in non-Enlish languages!
+Intended for English speakers, this extension logs the words you look up in the WordReference translation dictionary corresponding to a selected language, so you can later retrieve them for study.
 
 ADDITIONALLY:
 
