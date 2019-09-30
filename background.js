@@ -15,7 +15,7 @@ var new_window_ID = null;
 
 //Injected code which returns selected text
 var code_injection = function() {
-    return window.getSelection().toString().trim().replace("%20", " ").replace(/[!,.?:;'"()*{}]/g, "");
+    return window.getSelection().toString().replace(/"%20"/g, " ").replace(/[!@#\$%\^&*():;"'<,>.\?]/g, "").trim();
 }
 
 //Code to run when the extension is installed or updated
@@ -55,6 +55,7 @@ chrome.commands.onCommand.addListener(function(command) {
 
 //Calls a function to appropriately process selected text
 chrome.commands.onCommand.addListener(function(command) {
+    console.log("Got command", command);
     if (command === 'display-conjugation-reference') {
         chrome.storage.local.get(null, function(item) {
             if (item.language == "") {
@@ -87,7 +88,7 @@ function process_input(type, language, html) {
             }
             last_word_added = result;
             if (chrome.runtime.lastError) {
-                alert("error", chrome.runtime.lastError);
+                alert("error: 0", chrome.runtime.lastError);
             }
         }
     );

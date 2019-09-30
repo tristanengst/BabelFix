@@ -1,9 +1,9 @@
 {
     "name": "BabelFix",
     "description": "Eases English speakers chatting in languages they know only a little",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "manifest_version": 2,
-    "permissions": ["contextMenus", "tabs", "<all_urls>", "*://*/*", "storage", "notifications"],
+    "permissions": ["contextMenus", "https://www.wordreference.com/", "activeTab", "*://*/*", "storage", "notifications"],
     "background": {
         "scripts": ["background.js"],
         "persistent": true
