@@ -1,146 +1,195 @@
-//An enum storing information to make this work for supported languages_enum
+/**
+ ************************** TODO: **************************
+ * - Updating the extension likely deletes a user's data and langauge. (Fixed?)
+ *
+ */
+
+/** Runs when the extension is installed or updated **/
+ chrome.runtime.onInstalled.addListener(
+     function(details) {
+         if (details.reason == "install") {
+             chrome.storage.local.set({html: "", language: ""});
+             give_notification("installation");
+         }
+         else return;
+     }
+ );
+
+ /** Runs when BabelFix has been activated **/
+ chrome.commands.onCommand.addListener(
+     function(command) {
+         //Displays a dictionary reference
+         if (command === 'display-dictionary-reference') {
+             chrome.storage.local.get(null, function(item) {
+                 if (item.language == "") give_notification("language_needed");
+                 else process_input("dictionary", item.language, item.html);
+             });
+         }
+         //Displays a conjugation reference
+         else if (command === 'display-conjugation-reference') {
+             chrome.storage.local.get(null, function(item) {
+                 if (item.language == "") give_notification("language_needed");
+                 else process_input("conjugation", item.language, item.html);
+             });
+         }
+         else {
+             alert("BabelFix error: command not recognized");
+         }
+     }
+ );
+
+/**
+ * Information used to get data for supported languages
+ *
+ * (Right now some of what's here supports changes in the works)
+ */
 var languages_enum = {
     FRENCH: {to_english_url: "https://www.wordreference.com/fren/", from_english_url: "https://www.wordreference.com/enfr/", conjugation_url: "https://www.wordreference.com/conj/FrVerbs.aspx?v=", search_positioner: "/"},
     MANDARIN: {to_english_url: "https://www.wordreference.com/zhen/", from_english_url: "https://www.wordreference.com/enzh/", conjugation_url: "", search_positioner: ""},
     SPANISH: {to_english_url: "https://www.wordreference.com/es/en/translation.asp?spen=", from_english_url: "https://www.wordreference.com/es/translation.asp?tranword=", conjugation_url: "https://www.wordreference.com/conj/EsVerbs.aspx?v=", search_positioner: "="},
 };
 
-//Keeps track of the last word added to prevent duplicates, especially from if a key is held down.
-//Only the last word is tracked—duplicate words are allowed-with the intent of having words looked
-//up often be ones that are reviewed the most
+/**
+ * The last word added to BabelFix's dictionary. This is needed to prevent
+ * (bad) duplicates. Only the last word added is tracked—duplicate words are
+ * allowed-with the intent of having words looked up often be ones that are
+ * reviewed the most
+ */
 var last_word_added = null;
 
-//Stores the window ID of the window currently displaying translations
+/**
+ * The window ID of the window currently displaying translations
+ */
 var new_window_ID = null;
 
-//Injected code which returns selected text
+/**
+ * Code which is injected to get selected text as a string
+ */
 var code_injection = function() {
-    return window.getSelection().toString().replace(/"%20"/g, " ").replace(/[!@#\$%\^&*():;"'<,>.\?]/g, "").trim();
+    var string = window.getSelection().toString();
+    if (string != null) return string;
+    else alert("BabelFix error: code injection failed");
 }
 
-//Code to run when the extension is installed or updated
-chrome.runtime.onInstalled.addListener(function(details) {
-    chrome.storage.local.set({html: "", language: ""});
-    if (details.reason == "install") give_notification("installation");
-});
+/**
+ * Returns [string] after having cleaned punctuation from it and trimmed it
+ *
+ * [str] - The string to clean
+ */
+ function clean_string(string) {
+     return string.toString().replace(/"%20"/g, " ").replace(/[|&;$%@"<>()+,]/g, "").trim()
+ }
 
-//Closes the current reference window if it exists and opens a new reference
-//  window as appropriate
+/**
+ * Closes the reference window if it exists and opens a new one, according to
+ * inputs [result], [type], and [language]
+ *
+ * [result] - The word being looked up
+ * [type] - One of 'dictionary' or 'conjugation', determining what kind of
+ * reference to display. Note that 'conjugation' can't be used when the
+ * language is Mandarin, for linguistic reasons
+ * [language] - The language to use; must be an element of [languages_enum]
+ */
 function display_reference(result, type, language) {
     var link;
-    if (type === "dictionary") link = languages_enum[language].to_english_url + result;
-    else if (type === "conjugation" && language != "MANDARIN") link = languages_enum[language].conjugation_url + result;
+    if (type === "dictionary") {
+        link = languages_enum[language].to_english_url + result;
+    }
+    else if (type === "conjugation" && language != "MANDARIN") {
+        link = languages_enum[language].conjugation_url + result;
+    }
     else return;
-    if (new_window_ID != null) chrome.windows.remove(new_window_ID, function() {
-        if (chrome.runtime.lastError) {} //do nothing! This error is created when the user manually closes the window
-    }); //This could probably be done without creating a new window each time
-    chrome.windows.create({url: link, width: 480, height: 480, focused: true, type: "popup"}, function(new_window) {
-            new_window_ID = new_window.id;
-        }
+
+    //This could probably be done without creating a new window each time
+    if (new_window_ID != null) {
+        chrome.windows.remove(
+            new_window_ID,
+            function() {if (chrome.runtime.lastError) {}}); //do nothing! This error is created when the user manually closes the window
+    }
+    chrome.windows.create(
+        {url: link, width: 480, height: 480, focused: true, type: "popup"},
+        function(new_window) {new_window_ID = new_window.id;}
     );
 }
 
-//Calls a function to appropriately process selected text
-chrome.commands.onCommand.addListener(function(command) {
-    if (command === 'display-dictionary-reference') {
-        chrome.storage.local.get(null, function(item) {
-            if (item.language == "") {
-                give_notification("language_needed");
-                return;
-            }
-            process_input("dictionary", item.language, item.html);
-        });
-    }
-});
-
-//Calls a function to appropriately process selected text
-chrome.commands.onCommand.addListener(function(command) {
-    console.log("Got command", command);
-    if (command === 'display-conjugation-reference') {
-        chrome.storage.local.get(null, function(item) {
-            if (item.language == "") {
-                give_notification("language_needed");
-                return;
-            }
-            process_input("conjugation", item.language, item.html);
-        });
-    }
-});
-
-//Displays a reference for the selected text, as appropriate, and logs the selected text
+/**
+ * Runs the code injection to get text [result] and then processes [result]
+ * according to [type], [language], [html], and the state of the program.
+ *
+ * [type] - One of 'dictionary' or 'conjugation', determining what kind of
+ * reference to display. Note that 'conjugation' can't be used when the language is Mandarin, for linguistic reasons
+ * [language] - The language to use; must be an element of [languages_enum]
+ * [html] - The old HTML code
+ */
 function process_input(type, language, html) {
-    chrome.tabs.executeScript({code: '(' + code_injection + ')()', allFrames: true}, function(result) {
-            if (result != "" && last_word_added != result) {
+    chrome.tabs.executeScript(
+        {code: '(' + code_injection + ')()', allFrames: true},
+        function(result) {
+            result = clean_string(result)
+            if (result != "" && result != last_word_added) {
                 if (type == "dictionary") {
                     display_reference(result, "dictionary", language);
-                    var updated_html = html + '<tr><td>' + result + '</td></tr>';
-                    chrome.storage.local.set({html: updated_html});
+                    var new_html = html + '<tr><td>' + result + '</td></tr>';
+                    chrome.storage.local.set({html: new_html});
                 }
-                else {
+                else if (type == "conjugation") {
                     display_reference(result, "conjugation", language);
-                    var updated_html = html + '<tr><td> (conjugate) ' + result + '</td></tr>';
-                    chrome.storage.local.set({html: updated_html});
+                    var new_html = html + '<tr><td> (conjugate) ' + result + '</td></tr>';
+                    chrome.storage.local.set({html: new_html});
                 }
+                else return;
             }
-            if (result != "" && last_word_added == result) {
-                if (type == "dictionary") display_reference(result, "dictionary", language);
-                else display_reference(result, "conjugation", language);
+            else if (result != "" && result == last_word_added) {
+                if (type == "dictionary") {
+                    display_reference(result, "dictionary", language);
+                }
+                else if (type == "conjugation") {
+                    display_reference(result, "conjugation", language);
+                }
+                else return;
             }
+            else return; //It must be that result == ""
+
+            //If result wasn't the empty string, update the [last word added]
             last_word_added = result;
+
+            //If there was an error, figure out whether or not to display it
             if (chrome.runtime.lastError) {
-                alert("error: 0", chrome.runtime.lastError);
+                if (chrome.runtime.lastError.message != "Cannot access a chrome:// URL") {
+                    alert("BabelFix error: " + chrome.runtime.lastError.message);
+                }
             }
         }
     );
 }
 
-//When an English-to-Other Language search is made, log what the search was on
-chrome.tabs.onUpdated.addListener( function (tabId, changeInfo, tab) {
-    var from_english_urls = ["https://www.wordreference.com/enfr/", "https://www.wordreference.com/enzh/", "https://www.wordreference.com/es/translation.asp?tranword="];
-    if (changeInfo.status == "complete") {
-        for (var i = 0; i < from_english_urls.length; i++) {
-            if (tab.url.includes(from_english_urls[i])) {
-                chrome.storage.local.get(null, function(item) {
-                    if (item.language == "") {
-                        give_notification("language_needed");
-                        return;
-                    }
-                    var search_position = tab.url.lastIndexOf(languages_enum[item.language].search_positioner) + 1;
-                    var search = tab.url.substring(search_position)
-                    if (last_word_added != search) {
-                        var updated_html = item.html + '<tr><td>' + search.replace("%20", " ").replace(/[!,.?:;'"()*{}]/g, "") + '</td></tr>';
-                        chrome.storage.local.set({html: updated_html});
-                    }
-                    last_word_added = search;
-                });
-                break;
-            }
-        }
-    }
-});
-
-/////////CODE PROMPTING THE USER TO SELECT A LANGUAGE//////////
-
-//An object containing the notification sent to users on installation
-var install_notification = {
-    type: "basic",
-    title: "BabelFix Installed",
-    message: "Make sure to select a language!",
-    iconUrl: "images/icon.png",
-};
-
-//An object containing a notification sent to users to tell them to select a
-//  language
-var language_unset_notification = {
-    type: "basic",
-    title: "BabelFix could have saved that word...",
-    message: "Select a language from the extension icon to start using BabelFix",
-    iconUrl: "images/icon.png",
-};
-
-//Gives a notification
+/**
+ * Gives the user a notification matching [type]
+ * [type] - One of "installation" or "language_needed"
+ */
 function give_notification(type) {
-    if (type == "installation") chrome.notifications.create(install_notification);
-    else if (type == "language_needed") chrome.notifications.create(language_unset_notification);
+
+    //An object containing the notification sent upon BabelFix's installation
+    var install_notification = {
+        type: "basic",
+        title: "BabelFix Installed",
+        message: "Make sure to select a language!",
+        iconUrl: "images/icon.png",
+    };
+
+    //An object containing a notification saying to select a language
+    var language_unset_notification = {
+        type: "basic",
+        title: "BabelFix could have saved that word...",
+        message: "Select a language from the extension icon to start using BabelFix",
+        iconUrl: "images/icon.png",
+    };
+
+    if (type == "installation") {
+        chrome.notifications.create(install_notification);
+    }
+    else if (type == "language_needed") {
+        chrome.notifications.create(language_unset_notification);
+    }
     else return;
 }

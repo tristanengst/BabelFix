@@ -1,7 +1,7 @@
 {
     "name": "BabelFix",
     "description": "Eases English speakers chatting in languages they know only a little",
-    "version": "1.0.2",
+    "version": "1.1.0",
     "manifest_version": 2,
     "permissions": ["contextMenus", "https://www.wordreference.com/", "activeTab", "*://*/*", "storage", "notifications"],
     "background": {
@@ -17,24 +17,17 @@
     "commands": {
         "display-dictionary-reference": {
             "suggested_key": {
-                "default": "Ctrl+Shift+Y",
-                "mac": "MacCtrl+Shift+Y"
+                "default": "Ctrl+Shift+Z",
+                "mac": "MacCtrl+Shift+Z"
             },
             "description": "Display a translation dictionary entry for the selected text"
         },
         "display-conjugation-reference": {
             "suggested_key": {
-                "default": "Ctrl+Shift+C",
-                "mac": "MacCtrl+Shift+C"
+                "default": "Ctrl+Shift+X",
+                "mac": "MacCtrl+Shift+X"
             },
             "description": "Display a list of conjugations for the selected verb"
-        },
-        "_execute_browser_action": {
-            "suggested_key": {
-                "default": "Ctrl+Shift+K",
-                "mac": "MacCtrl+Shift+K"
-            },
-            "description": "Display a translation dictionary entry for the selected text"
         }
     }
 }

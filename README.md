@@ -1,13 +1,19 @@
 # BabelFix (beta)
 Intended for English speakers, this extension logs the words you look up in the WordReference translation dictionary corresponding to a selected language, so you can later retrieve them for study, as well as providing some translation services through WordReference.
 
-Press Ctrl+Shift+Y to view a the WordReference translations to English of a selected word, and log it for further study
+Press Ctrl+Shift+Z to view a the WordReference translations to English of a selected word, and log it for further study.
 
-Press Ctrl+Shift+C to view the WordReference conjugation chart of a selected verb, conjugated however you remember it, and log it for further study (not applicable or available for some languages)
+Press Ctrl+Shift+X to view the WordReference conjugation chart of a selected verb, conjugated however you remember it, and log it for further study (not applicable or available for some languages).
 
 SUPPORTED LANGUAGES: French, Mandarin, and Spanish (Hopefully more will be added soon)
 
+KNOWN ISSUES AND FIXES:
+Chrome prevents extensions like BabelFix which use certain services from running when a 'chrome:// tab' is open. This prevents malicious extensions from changing the user interface that might be used to control them. If you've a 'chrome://' tab open—eg. the browser settings—close it and BabelFix should work.
+
+BabelFix will ignore the keyboard shortcuts if they conflict with others. The ones given work for me, but it's entirely conceivable that's because of my unique computer configuration. I'm working on functionality to allow each user to set their own shortcuts.
+
 ----------VERSION HISTORY---------
+Version 1.1.0: Displays errors more intelligently, changed keyboard shortcuts to better work with other extensions or newer version of Chrome. Took away support for logging every WordReference search until I can work out some kinks here. Added to popup.
 
 Version 1.0.2: Fixed bugs where unwanted punctuation could get into longer searches
 
