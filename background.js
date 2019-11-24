@@ -1,7 +1,7 @@
 /**
  ************************** TODO: **************************
  * - Updating the extension likely deletes a user's data and langauge. (Fixed?)
- *
+ * - Switch string cleaning to regex
  */
 
 /** Runs when the extension is installed or updated **/
@@ -74,10 +74,27 @@ var code_injection = function() {
 /**
  * Returns [string] after having cleaned punctuation from it and trimmed it
  *
+ * Right now this is done poorly because fixing the regex will take more
+ * time and I need to get back to college.
  * [str] - The string to clean
  */
  function clean_string(string) {
-     return string.toString().replace(/"%20"/g, " ").replace(/[|&;$%@"<>()+,]/g, "").trim()
+    var bad_chars = ",<.>/?;:\'\"[{]}\\|=+-_1!2@3#4$5%6^7&8*9(0)'";
+    var result = "";
+    for (var i = 0; i < string.toString().length; i++) {
+        var c = string.toString().charAt(i);
+        var can_add = true;
+        for (var j = 0; j < bad_chars.toString().length; j++) {
+            if (c == bad_chars.toString().charAt(j)) {
+                can_add = false;
+                break;
+            }
+        }
+        if (can_add) {
+            result = result.concat(c);
+        }
+    }
+    return result
  }
 
 /**
@@ -125,6 +142,13 @@ function process_input(type, language, html) {
     chrome.tabs.executeScript(
         {code: '(' + code_injection + ')()', allFrames: true},
         function(result) {
+            //If there was an error, figure out whether or not to display it
+            if (chrome.runtime.lastError) {
+                if (chrome.runtime.lastError.message != "Cannot access a chrome:// URL") {
+                    alert("BabelFix error: " + chrome.runtime.lastError.message);
+                }
+                return;
+            }
             result = clean_string(result)
             if (result != "" && result != last_word_added) {
                 if (type == "dictionary") {
@@ -152,13 +176,6 @@ function process_input(type, language, html) {
 
             //If result wasn't the empty string, update the [last word added]
             last_word_added = result;
-
-            //If there was an error, figure out whether or not to display it
-            if (chrome.runtime.lastError) {
-                if (chrome.runtime.lastError.message != "Cannot access a chrome:// URL") {
-                    alert("BabelFix error: " + chrome.runtime.lastError.message);
-                }
-            }
         }
     );
 }
