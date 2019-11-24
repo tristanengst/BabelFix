@@ -3,7 +3,7 @@
     "description": "Eases English speakers chatting in languages they know only a little",
     "version": "1.1.0",
     "manifest_version": 2,
-    "permissions": ["contextMenus", "https://www.wordreference.com/", "activeTab", "*://*/*", "storage", "notifications"],
+    "permissions": ["contextMenus", "https://www.wordreference.com/", "*://*/*", "storage", "notifications"],
     "background": {
         "scripts": ["background.js"],
         "persistent": true
